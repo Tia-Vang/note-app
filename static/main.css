@@ -42,3 +42,8 @@ main > .container {
     color: var(--light-green);
     text-align: center;
 }
+
+.sortLinks {
+    color: black !important;
+    text-decoration: none !important;
+}

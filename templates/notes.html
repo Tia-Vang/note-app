@@ -2,28 +2,36 @@
 {% set active_page = "get_notes" %}
 
 {% block content %}
-    <!-- Enter page content here -->
-    <h1>My Notes</h1>
-    <table class="table">
-        <tr>
-            <th class="col">Title</th>
-            <th class="col">Date</th>
-            <th class="col" colspan="2">Actions</th>
-        </tr>
-        {% set sort_by = request.args.sort_by|default('title') %}
-        {% for note in notes|sort(attribute=sort_by) %}
-            <tr>
-                <td><a href="{{ url_for('get_note', note_id = note.id) }}">{{ note.title }}</a></td>
-                <td>{{ note.date }}</td>
-                <td><a href="{{ url_for('update_note', note_id = note.id) }}" class="btn
+<!-- Enter page content here -->
+<h1>My Notes</h1>
+<table class="table">
+    <!--        <h5><a href="{{ url_for('get_notes', sort_by='title')}}">Sort by title</a></h5>-->
+    <!--        <h5><a href="{{url_for('get_notes', sort_by='date')}}">Sort by date</a></h5>-->
+    <tr>
+        <th class="col"><a class="sortLinks" href="{{ url_for('get_notes', sort_by='title')}}">Title<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
+  <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
+</svg>
+        </a></th>
+        <th class="col"><a class="sortLinks" href="{{url_for('get_notes', sort_by='date')}}">Date<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
+  <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
+</svg>
+        </a></th>
+        <th class="col" colspan="2">Actions</th>
+    </tr>
+    {% set sort_by = request.args.sort_by|default('title') %}
+    {% for note in notes|sort(attribute=sort_by) %}
+    <tr>
+        <td><a href="{{ url_for('get_note', note_id = note.id) }}">{{ note.title }}</a></td>
+        <td>{{ note.date }}</td>
+        <td><a href="{{ url_for('update_note', note_id = note.id) }}" class="btn
                 btn-outline-success">Edit</a></td>
-                <td>
-                    <form action="{{ url_for('delete_note', note_id = note.id) }}" method="post">
-                        <input type="submit" value="Delete" class="btn btn-outline-danger">
-                    </form>
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
-    <!-- End of page content -->
+        <td>
+            <form action="{{ url_for('delete_note', note_id = note.id) }}" method="post">
+                <input type="submit" value="Delete" class="btn btn-outline-danger">
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<!-- End of page content -->
 {% endblock content %}

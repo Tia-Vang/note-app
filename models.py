@@ -10,6 +10,7 @@ class Note(db.Model):
     date = db.Column("date", db.String(50))
     last_modified = db.Column("last_modified", db.String(50))
     is_favorite = db.Column("is_favorite", db.Boolean())
+    is_published = db.Column("is_published", db.Boolean())
     # can create a foreign key; referencing the id variable in the User class, so that is why it is lowercase u
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     comments = db.relationship("Comment", backref="note",
@@ -22,6 +23,7 @@ class Note(db.Model):
         self.last_modified = date
         self.user_id = user_id
         self.is_favorite = False
+        self.is_published = False
 
 
 class User(db.Model):
