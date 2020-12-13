@@ -29,7 +29,7 @@ with app.app_context():
 def index():
     if session.get('user'):
         print(session['user'])
-        return render_template("index.html", user=session['user'])
+        return redirect(url_for('get_notes'))
     else:
         return render_template('index.html')
 
@@ -47,7 +47,7 @@ def get_notes():
         return render_template('notes.html', notes=my_notes,
                                user=session['user'])
     else:
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
 
 # TODO: Edit contents of note to match data model DONE
@@ -72,7 +72,7 @@ def new_note():
             return render_template('new.html', user=session['user'])
     else:
         # user is not in session; redirect to login
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
 
 # TODO: Edit contents of note to match data model DONE
@@ -82,14 +82,14 @@ def get_note(note_id):
         # retrieve note from DB
         my_note = db.session.query(Note).filter_by(id=note_id, user_id=session[
             'user_id']).one()
-
+        
         # create a comment form object
         form = CommentForm()
 
         return render_template('note.html', note=my_note, user=session['user'],
                                form=form)
     else:
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
 
 # TODO Check implementation - sort of guessed on this
@@ -106,7 +106,7 @@ def bookmark_note(note_id):
         else:
             return {'error': 'Not authorized'}, 400
     else:
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
 
 # TODO Update according to data model DONE
@@ -142,7 +142,7 @@ def update_note(note_id):
                                    user=session['user'])
     else:
         # user is not in session; redirect to login
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
 
 @app.route('/notes/delete/<note_id>', methods=['POST'])
@@ -153,65 +153,70 @@ def delete_note(note_id):
         my_note = db.session.query(Note).filter_by(id=note_id).one()
         db.session.delete(my_note)
         db.session.commit()
-
         return redirect(url_for('get_notes'))
     else:
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
 
 # TODO Update to fit data model DONE
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    form = RegisterForm()
-    # validate_on_submit only validates using POST
-    if form.validate_on_submit():
-        # form validation included a criteria to check the username does not
-        # exist we can know we are safe to add a user to the database
-        password_hash = bcrypt.hashpw(
-            request.form['password'].encode('utf-8'), bcrypt.gensalt())
-        first_name = request.form['firstname']
-        last_name = request.form['lastname']
-        new_record = User(first_name, last_name, request.form['email'],
-                          password_hash)
-        db.session.add(new_record)
-        db.session.commit()
-        # save the user's name to the session
-        session['user'] = first_name
-        # get the id of the newly created database record
-        the_user = db.session.query(User).filter_by(
-            email=request.form['email']).one()
-        # save the user's id to the session
-        session['user_id'] = the_user.id
+    if session.get('user'):
+        return redirect(url_for('index'))
+    else:
+        form = RegisterForm()
+        # validate_on_submit only validates using POST
+        if form.validate_on_submit():
+            # form validation included a criteria to check the username does not
+            # exist we can know we are safe to add a user to the database
+            password_hash = bcrypt.hashpw(
+                request.form['password'].encode('utf-8'), bcrypt.gensalt())
+            first_name = request.form['firstname']
+            last_name = request.form['lastname']
+            new_record = User(first_name, last_name, request.form['email'],
+                              password_hash)
+            db.session.add(new_record)
+            db.session.commit()
+            # save the user's name to the session
+            session['user'] = first_name
+            # get the id of the newly created database record
+            the_user = db.session.query(User).filter_by(
+                email=request.form['email']).one()
+            # save the user's id to the session
+            session['user_id'] = the_user.id
 
-        return redirect(url_for('get_notes'))
-    return render_template('register.html', form=form)
+            return redirect(url_for('get_notes'))
+        return render_template('register.html', form=form)
 
 
 # TODO Update to fit data model? (May be functional, but double check) DONE
 @app.route('/login', methods=['POST', 'GET'])
 def login():
-    login_form = LoginForm()
-    # validate_on_submit only validates using POST
-    if login_form.validate_on_submit():
-        # we know user exists. We can use one()
-        the_user = db.session.query(User).filter_by(
-            email=request.form['email']).one()
-        # user exists check password entered matches stored password
-        if bcrypt.checkpw(request.form['password'].encode('utf-8'),
-                          the_user.password):
-            # password match add user info to session
-            session['user'] = the_user.firstname
-            session['user_id'] = the_user.id
-            # render view
-            return redirect(url_for('get_notes'))
-
-        # password check failed
-        # set error message to alert user
-        login_form.password.errors = ["Incorrect username or password."]
-        return render_template("login.html", form=login_form)
+    if session.get('user'):
+        return redirect(url_for('index'))
     else:
-        # form did not validate or GET request
-        return render_template("login.html", form=login_form)
+        login_form = LoginForm()
+        # validate_on_submit only validates using POST
+        if login_form.validate_on_submit():
+            # we know user exists. We can use one()
+            the_user = db.session.query(User).filter_by(
+                email=request.form['email']).one()
+            # user exists check password entered matches stored password
+            if bcrypt.checkpw(request.form['password'].encode('utf-8'),
+                              the_user.password):
+                # password match add user info to session
+                session['user'] = the_user.firstname
+                session['user_id'] = the_user.id
+                # render view
+                return redirect(url_for('get_notes'))
+
+            # password check failed
+            # set error message to alert user
+            login_form.password.errors = ["Incorrect username or password."]
+            return render_template("login.html", form=login_form)
+        else:
+            # form did not validate or GET request
+            return render_template("login.html", form=login_form)
 
 
 @app.route('/logout')
@@ -238,7 +243,7 @@ def new_comment(note_id):
         return redirect(url_for('get_note', note_id=note_id))
 
     else:
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
 
 @app.route('/notes/publish/<note_id>', methods=['POST'])
